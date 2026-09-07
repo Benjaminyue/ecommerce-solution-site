@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电商异常归因诊断器</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --card: #131829;
+    --card-hover: #1a2038;
+    --accent: #f59e0b;
+    --accent2: #ef4444;
+    --accent3: #10b981;
+    --accent4: #3b82f6;
+    --accent5: #a855f7;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #1e293b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header p { color: var(--text-muted); font-size: 0.9rem; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .panel h3 {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .form-group input[type="number"],
+  .form-group input[type="range"] {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  .form-group input[type="range"] { padding: 0; height: 6px; }
+  .form-group .range-val {
+    display: inline-block;
+    color: var(--accent3);
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  .section-tag {
+    font-size: 0.75rem;
+    color: var(--accent4);
+    font-weight: 600;
+    margin: 16px 0 10px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+  .section-tag:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .kpi-card .label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+  .kpi-card .value { font-size: 1.5rem; font-weight: 700; color: var(--accent3); }
+  .kpi-card .value.red { color: var(--accent2); }
+  .kpi-card .value.gold { color: var(--accent); }
+  .kpi-card .sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+  .kpi-card { transition: transform 0.3s, box-shadow 0.3s; }
+  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(16,185,129,0.1); }
+
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+  .result-anim { animation: fadeInUp 0.6s ease; }
+  .pp-tab.active { animation: pulse 1s ease; }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 700px) { .chart-grid { grid-template-columns: 1fr; } }
+  .chart-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .chart-box h4 { font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted); }
+  .chart { width: 100%; height: 300px; }
+
+  .diagnosis {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .diagnosis h3 { color: var(--accent); margin-bottom: 14px; }
+  .diag-item {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .diag-item.danger { background: rgba(239,68,68,0.1); border-left: 3px solid var(--accent2); }
+  .diag-item.warning { background: rgba(245,158,11,0.1); border-left: 3px solid var(--accent); }
+  .diag-item.info { background: rgba(16,185,129,0.08); border-left: 3px solid var(--accent3); }
+  .diag-item .tag { font-weight: 700; margin-right: 6px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--accent); font-weight: 600; }
+  .priority-high { color: var(--accent2); font-weight: 700; }
+  .priority-mid { color: var(--accent); font-weight: 700; }
+  .priority-low { color: var(--accent3); font-weight: 700; }
+
+  .cta {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-size: 0.88rem;
+    color: #fbbf24;
+  }
+
+  /* 痛点互动 */
+  .painpoint-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .painpoint-section h3 {
+    font-size: 1rem;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+  }
+  .painpoint-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .pp-tab {
+    flex: 1;
+    min-width: 140px;
+    padding: 10px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .pp-tab:hover { border-color: var(--accent3); color: var(--text); }
+  .pp-tab.active {
+    background: rgba(16,185,129,0.15);
+    border-color: var(--accent3);
+    color: var(--accent3);
+    font-weight: 600;
+  }
+  .pp-content {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    min-height: 120px;
+  }
+  .pp-content .pp-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent3);
+    margin-bottom: 10px;
+  }
+  .pp-content .pp-block { margin-bottom: 12px; }
+  .pp-content .pp-label {
+    font-size: 0.78rem;
+    color: var(--accent4);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .pp-content .pp-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .pp-content .pp-merics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0;
+  }
+  .pp-content .pp-metric {
+    background: rgba(16,185,129,0.1);
+    color: #34d399;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+  .pp-content .pp-case {
+    background: rgba(59,130,246,0.06);
+    border-left: 3px solid var(--accent4);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .pp-content .pp-link {
+    margin-top: 14px;
+    display: inline-block;
+    background: var(--accent3);
+    color: #000;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    border-top: 1px solid var(--border);
+    margin-top: 30px;
+  }
+  footer a { color: var(--accent3); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛒 电商异常归因诊断器</h1>
+  <p>填8个数据，1分钟看你的异常响应有多慢、损失有多大</p>
+</div>
+
+<div class="container">
+  <div class="layout">
+    <!-- 左侧输入面板 -->
+    <div class="panel">
+      <h3>📝 填写电商运营数据</h3>
+
+      <div class="section-tag">营收 & 订单</div>
+      <div class="form-group">
+        <label>日均订单量</label>
+        <input type="number" id="dailyOrders" value="5000" min="100" max="100000" step="100">
+      </div>
+      <div class="form-group">
+        <label>客单价/元</label>
+        <input type="number" id="avgPrice" value="120" min="10" max="5000" step="10">
+      </div>
+      <div class="form-group">
+        <label>月GMV/万元</label>
+        <input type="number" id="monthlyGMV" value="1800" min="10" max="50000" step="50">
+      </div>
+
+      <div class="section-tag">退货 & 损耗</div>
+      <div class="form-group">
+        <label>日均退货量</label>
+        <input type="number" id="dailyReturns" value="150" min="0" max="5000" step="10">
+      </div>
+      <div class="form-group">
+        <label>退货率/% <span class="range-val" id="returnRateVal">3%</span></label>
+        <input type="range" id="returnRate" min="0.5" max="30" value="3" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>临期商品占比/% <span class="range-val" id="expiryRateVal">8%</span></label>
+        <input type="range" id="expiryRate" min="0" max="50" value="8" step="0.5">
+      </div>
+
+      <div class="section-tag">异常 & 团队</div>
+      <div class="form-group">
+        <label>异常发现周期/天</label>
+        <input type="number" id="detectDays" value="5" min="0.5" max="30" step="0.5">
+      </div>
+      <div class="form-group">
+        <label>数据团队人数</label>
+        <input type="number" id="dataTeam" value="4" min="0" max="20" step="1">
+      </div>
+    </div>
+
+    <!-- 右侧结果面板 -->
+    <div>
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="label">日营收</div>
+          <div class="value" id="kpiDailyRevenue">0</div>
+          <div class="sub">万元/日</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">日退货损失</div>
+          <div class="value red" id="kpiReturnLoss">0</div>
+          <div class="sub" id="kpiReturnLossSub">退货率3%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">月异常损失</div>
+          <div class="value red" id="kpiMonthlyLoss">0</div>
+          <div class="sub">估算值</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">年化优化空间</div>
+          <div class="value gold" id="kpiAnnualSaving">0</div>
+          <div class="sub" id="kpiAnnualSavingSub">万元/年</div>
+        </div>
+      </div>
+
+      <!-- 图表 -->
+      <div class="chart-grid">
+        <div class="chart-box">
+          <h4>📊 优化空间分解（万元/月）</h4>
+          <div id="chartBar" class="chart"></div>
+        </div>
+        <div class="chart-box">
+          <h4>📈 优化方向占比</h4>
+          <div id="chartPie" class="chart"></div>
+        </div>
+      </div>
+
+      <div class="chart-box" style="margin-bottom: 20px;">
+        <h4>💰 月度成本结构（万元）</h4>
+        <div id="chartCost" class="chart" style="height: 280px;"></div>
+      </div>
+
+      <!-- 诊断结论 -->
+      <div class="diagnosis">
+        <h3>🔍 诊断结论</h3>
+        <div id="diagList"></div>
+      </div>
+
+      <!-- 行动建议 -->
+      <div class="diagnosis">
+        <h3>🚀 行动建议</h3>
+        <table>
+          <thead>
+            <tr><th>优先级</th><th>行动</th><th>预期效果</th><th>难度</th></tr>
+          </thead>
+          <tbody id="actionTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 痛点互动 -->
+      <div class="painpoint-section">
+        <h3>🎯 你的痛点是什么？选一个，看看我们怎么帮你解决</h3>
+        <div class="painpoint-tabs">
+          <button class="pp-tab active" data-pain="detection">维权爆发<br>才知道</button>
+          <button class="pp-tab" data-pain="attribution">转化率跌了<br>不知道为啥</button>
+          <button class="pp-tab" data-pain="expiry">牛奶临期<br>没人管</button>
+          <button class="pp-tab" data-pain="returns">退货文本<br>没人看</button>
+          <button class="pp-tab" data-pain="complaint">被投诉了<br>才知道</button>
+        </div>
+        <div id="ppContent" class="pp-content"></div>
+      </div>
+
+      <div class="cta">
+        💡 <strong>想获取针对你企业的详细异常归因方案？</strong> 联系我们的顾问团队，获取基于你真实数据的优化模型和完整实施路径。
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>电商异常归因诊断器 · 异常响应决策引擎</div>
+  <div style="margin-top: 6px; color: var(--text-muted);">基于 16KPI实时监控 + Z-score异常检测 + 6因素自动归因 + 因果推断算法构建</div>
+</footer>
+
+<script>
+// ========== 计算逻辑（16KPI + Z-score + 6因素归因模型参数）==========
+const MTTR_REDUCTION = 0.67;          // 异常归因提速 MTTR 下降 67%
+const RETURN_AUTO_RATE = 0.3;        // 退货预警自动化效率提升系数
+const EXPIRY_SAVE_RATE = 0.05;        // 临期商品监控损失减少系数
+const ANOMALY_LOSS_RATIO = 0.03;     // 异常损失占GMV比率
+
+function calc() {
+  const dailyOrders = +document.getElementById('dailyOrders').value;
+  const avgPrice = +document.getElementById('avgPrice').value;
+  const dailyReturns = +document.getElementById('dailyReturns').value;
+  const monthlyGMV = +document.getElementById('monthlyGMV').value;
+  const returnRate = +document.getElementById('returnRate').value;
+  const expiryRate = +document.getElementById('expiryRate').value;
+  const detectDays = +document.getElementById('detectDays').value;
+  const dataTeam = +document.getElementById('dataTeam').value;
+
+  // 更新滑块显示
+  document.getElementById('returnRateVal').textContent = returnRate + '%';
+  document.getElementById('expiryRateVal').textContent = expiryRate + '%';
+
+  // 营收 & 损失（统一换算到万元）
+  const dailyRevenue = dailyOrders * avgPrice / 10000;            // 万元/日
+  const returnLoss = dailyReturns * avgPrice * 0.8 / 10000;      // 万元/日
+  const monthlyLoss = monthlyGMV * ANOMALY_LOSS_RATIO * detectDays / 30 * returnRate; // 万元/月（估算）
+  const annualSaving = monthlyLoss * 12 * MTTR_REDUCTION;        // 万元/年
+
+  // 优化方向月省（万元/月）
+  const savingAttribution = monthlyLoss * MTTR_REDUCTION;                         // 异常归因提速
+  const savingReturnAuto = dailyReturns * avgPrice * RETURN_AUTO_RATE * 30 / 10000; // 退货预警自动化
+  const savingExpiry = monthlyGMV * expiryRate / 100 * EXPIRY_SAVE_RATE;          // 临期商品监控
+
+  // 更新 KPI
+  document.getElementById('kpiDailyRevenue').textContent = dailyRevenue.toFixed(1);
+  document.getElementById('kpiReturnLoss').textContent = returnLoss.toFixed(2);
+  document.getElementById('kpiReturnLossSub').textContent = `退货率${returnRate}%`;
+  document.getElementById('kpiMonthlyLoss').textContent = monthlyLoss.toFixed(1);
+  document.getElementById('kpiAnnualSaving').textContent = annualSaving.toFixed(0);
+  document.getElementById('kpiAnnualSavingSub').textContent = `预计降本区间 ${Math.round(annualSaving*0.6)}-${Math.round(annualSaving*1.2)} 万/年`;
+
+  // KPI 卡片渐入动画
+  document.querySelectorAll('.kpi-card').forEach(card => {
+    card.classList.remove('result-anim');
+    void card.offsetWidth;
+    card.classList.add('result-anim');
+  });
+
+  // 优化方向数据
+  const savingData = [
+    { name: '异常归因提速', value: +savingAttribution.toFixed(1), color: '#3b82f6', desc: 'MTTR-67%' },
+    { name: '退货预警自动化', value: +savingReturnAuto.toFixed(1), color: '#f59e0b', desc: '退货处理效率提升' },
+    { name: '临期商品监控', value: +savingExpiry.toFixed(1), color: '#10b981', desc: '临期损失减少' },
+  ];
+
+  // 柱状图
+  const barChart = echarts.init(document.getElementById('chartBar'));
+  barChart.setOption({
+    tooltip: { trigger: 'axis', formatter: p => `${p[0].name}<br/>月省: ${p[0].value} 万元` },
+    grid: { left: 50, right: 20, top: 20, bottom: 40 },
+    xAxis: { type: 'category', data: savingData.map(d => d.name), axisLabel: { color: '#94a3b8' } },
+    yAxis: { type: 'value', name: '万元', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+    series: [{
+      type: 'bar',
+      data: savingData.map(d => ({ value: d.value, itemStyle: { color: d.color, borderRadius: [6,6,0,0] } })),
+      label: { show: true, position: 'top', color: '#e2e8f0', formatter: '{c}' },
+      barWidth: '50%',
+    }]
+  });
+
+  // 饼图
+  const pieChart = echarts.init(document.getElementById('chartPie'));
+  pieChart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 万元 ({d}%)' },
+    legend: { bottom: 0, textStyle: { color: '#94a3b8' } },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      label: { show: true, formatter: '{b}\n{d}%', color: '#e2e8f0' },
+      data: savingData.map(d => ({ name: d.name, value: d.value, itemStyle: { color: d.color } })),
+    }]
+  });
+
+  // 成本结构饼图（万元/月）
+  const monthlyReturnLoss = dailyReturns * avgPrice * 0.8 * 30 / 10000; // 退货损失
+  const monthlyExpiryLoss = monthlyGMV * expiryRate / 100;              // 临期损失
+  const monthlyAnomalyLoss = monthlyLoss;                               // 异常延迟损失
+  const normalOps = Math.max(0, monthlyGMV - monthlyReturnLoss - monthlyExpiryLoss - monthlyAnomalyLoss); // 正常运营
+
+  const costChart = echarts.init(document.getElementById('chartCost'));
+  costChart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 万元 ({d}%)' },
+    legend: { bottom: 0, textStyle: { color: '#94a3b8' } },
+    series: [{
+      type: 'pie',
+      radius: ['35%', '65%'],
+      label: { show: true, formatter: '{b}\n{c}万', color: '#e2e8f0' },
+      data: [
+        { name: '退货损失', value: +monthlyReturnLoss.toFixed(1), itemStyle: { color: '#ef4444' } },
+        { name: '临期损失', value: +monthlyExpiryLoss.toFixed(1), itemStyle: { color: '#f59e0b' } },
+        { name: '异常延迟损失', value: +monthlyAnomalyLoss.toFixed(1), itemStyle: { color: '#a855f7' } },
+        { name: '正常运营', value: +normalOps.toFixed(1), itemStyle: { color: '#10b981' } },
+      ],
+    }]
+  });
+
+  // 诊断结论
+  const diag = [];
+  if (returnRate > 5) {
+    diag.push({ level: 'danger', tag: '🔴 退货率过高', text: `当前退货率 ${returnRate}%，高于行业健康线（5%）。日退货损失 ${returnLoss.toFixed(2)} 万元，退货预警自动化可降低退货处理成本，月省约 ${savingReturnAuto.toFixed(1)} 万元。` });
+  } else {
+    diag.push({ level: 'info', tag: '🟢 退货率正常', text: `退货率 ${returnRate}% 在健康区间内，但退货文本仍有归因价值。` });
+  }
+
+  if (expiryRate > 10) {
+    diag.push({ level: 'danger', tag: '🔴 临期商品风险', text: `临期商品占比 ${expiryRate}%，月临期损失约 ${monthlyExpiryLoss.toFixed(1)} 万元。临期监控可提前7天预警并联动促销，月省约 ${savingExpiry.toFixed(1)} 万元。` });
+  } else if (expiryRate > 5) {
+    diag.push({ level: 'warning', tag: '🟡 临期占比偏高', text: `临期商品占比 ${expiryRate}%，需关注短保商品损耗。临期监控月省约 ${savingExpiry.toFixed(1)} 万元。` });
+  }
+
+  if (detectDays > 3) {
+    diag.push({ level: 'warning', tag: '🟡 异常发现太慢', text: `异常发现周期 ${detectDays} 天，行业领先水平为小时级。MTTR每降1天，月异常损失减少约 ${(monthlyLoss/detectDays).toFixed(1)} 万元。` });
+  } else {
+    diag.push({ level: 'info', tag: '🟢 异常响应较快', text: `异常发现周期 ${detectDays} 天，接近小时级响应水平。` });
+  }
+
+  if (dataTeam === 0) {
+    diag.push({ level: 'danger', tag: '🔴 无数据团队', text: `数据团队人数为0，异常监控完全依赖人工。建议部署自动化异常归因系统，替代人工巡检，MTTR可降67%。` });
+  } else if (dataTeam <= 2) {
+    diag.push({ level: 'warning', tag: '🟡 数据团队薄弱', text: `数据团队仅 ${dataTeam} 人，难以支撑实时监控。自动化归因可释放人力，聚焦高价值分析。` });
+  }
+
+  diag.push({ level: 'info', tag: '💡 综合建议', text: `三项优化合计年化优化空间约 ${Math.round(annualSaving*0.6)}-${Math.round(annualSaving*1.2)} 万元/年。此为基于行业平均水平的估算，实际效果需结合企业真实数据评估。` });
+
+  const diagList = document.getElementById('diagList');
+  diagList.innerHTML = diag.map(d =>
+    `<div class="diag-item ${d.level}"><span class="tag">${d.tag}</span>${d.text}</div>`
+  ).join('');
+
+  // 行动建议表
+  const actions = [
+    { p: '高', pClass: 'priority-high', act: '部署16KPI实时监控+Z-score异常检测', effect: `MTTR降67%，年省 ${(savingAttribution*12).toFixed(0)} 万`, diff: '中' },
+    { p: '高', pClass: 'priority-high', act: '退货文本NLP聚类+预警自动化', effect: `退货处理效率提升，年省 ${(savingReturnAuto*12).toFixed(0)} 万`, diff: '中' },
+    { p: '中', pClass: 'priority-mid', act: '临期商品批次级监控+联动促销', effect: `临期损耗降，年省 ${(savingExpiry*12).toFixed(0)} 万`, diff: '低' },
+    { p: '低', pClass: 'priority-low', act: '搭建6因素归因+因果推断看板', effect: '转化下跌10分钟出根因', diff: '低' },
+  ];
+  document.getElementById('actionTable').innerHTML = actions.map(a =>
+    `<tr><td class="${a.pClass}">${a.p}</td><td>${a.act}</td><td>${a.effect}</td><td>${a.diff}</td></tr>`
+  ).join('');
+}
+
+// 绑定所有输入事件
+['dailyOrders','avgPrice','dailyReturns','monthlyGMV','returnRate','expiryRate','detectDays','dataTeam'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calc);
+});
+
+// ========== 痛点互动 ==========
+const painSolutions = {
+  detection: {
+    title: '场景：维权爆发才知道',
+    problem: '退货率飙升、差评爆发、舆情发酵才知道出了问题，等发现时损失已经发生3-5天，维权投诉堵满客服，品牌口碑被动受损。',
+    solution: '部署16KPI实时监控+Z-score异常检测，订单/退货/转化/客诉数据每5分钟刷新一次，异常3分钟自动定位到具体维度（商品/地区/渠道/批次），推送责任人。',
+    metrics: ['3分钟定位', '5分钟刷新', 'MTTR降67%', '7×24监控'],
+    case: '案例：某生鲜电商退货率从3%升至7%时，系统8分钟识别异常并归因到冷链断链批次，及时止损挽回月损失约40万。',
+    inputHint: '试试把左侧的异常发现周期从5天改为1天，看月异常损失的变化。',
+  },
+  attribution: {
+    title: '场景：转化率跌了不知道为啥',
+    problem: '转化率突然掉了0.5个点，运营、商品、价格、流量每个团队都说不是自己的问题，开会扯皮一周也找不到根因，错失补救窗口。',
+    solution: '6因素自动归因（流量/价格/商品/库存/营销/竞品）+因果推断算法，自动排除混杂因素，10分钟输出根因报告+Top3影响因素，直指责任方。',
+    metrics: ['6因素归因', '因果推断', '10分钟出报告', 'Top3根因'],
+    case: '案例：某美妆品牌转化率下跌，6因素归因定位到"主推品库存断货+满减门槛提高"双重因素，补货+调门槛后3天转化回升。',
+    inputHint: '试试调整左侧的日均订单量和客单价，模拟转化波动对营收的影响。',
+  },
+  expiry: {
+    title: '场景：牛奶临期没人管',
+    problem: '牛奶、生鲜、烘焙等短保商品临期没人管，靠人工巡店盘点，过期才打折清仓，损耗率高达5-8%，利润被悄悄吃掉。',
+    solution: '临期商品预警系统，按SKU+批次+保质期自动计算临期阈值，提前7天预警并联动促销/调价/会员推送，减少过期损耗。',
+    metrics: ['提前7天预警', '过期损耗降50%', '自动联动促销', '批次级追踪'],
+    case: '案例：某社区团购部署临期预警后，乳制品过期损耗从6.2%降至2.8%，月减少临期损失约15万。',
+    inputHint: '试试调整左侧的临期商品占比，看临期损失在成本结构中的变化。',
+  },
+  returns: {
+    title: '场景：退货文本没人看',
+    problem: '每天上千条退货原因文本，客服随手选"其他"，真实退货原因埋在文本里没人分析，同类问题反复发生，SKU反复踩坑。',
+    solution: 'NLP退货文本聚类+情感分析，自动归因Top退货原因（质量/尺码/描述不符/物流），联动商品/详情页/质检改进，从源头降低退货率。',
+    metrics: ['NLP聚类', 'Top原因归因', '退货率降15%', '根因到SKU'],
+    case: '案例：某服饰电商通过退货文本分析发现"尺码偏小"占退货32%，调整详情页尺码表后该类退货降40%。',
+    inputHint: '试试调整左侧的日均退货量和退货率，看退货损失规模。',
+  },
+  complaint: {
+    title: '场景：被投诉了才知道',
+    problem: '客诉分散在客服、电商评价、社交媒体，没人汇总。等12315投诉、黑猫曝光爆发才知道，品牌口碑已受损，挽回成本极高。',
+    solution: '全链路客诉监控（客服+电商评价+社交舆情），统一归口+情感预警+自动分级，负面舆情1小时内触达相关负责人，把被动救火变主动处置。',
+    metrics: ['全渠道归口', '1小时触达', '负面预警', '自动分级'],
+    case: '案例：某母婴品牌通过全链路监控，在某批次产品差评率达2%时提前介入召回，避免了一次潜在的舆情危机。',
+    inputHint: '试试调整左侧的数据团队人数，看不同团队规模下的异常响应能力。',
+  },
+};
+
+function renderPainSolution(pain) {
+  const d = painSolutions[pain];
+  if (!d) return;
+  const html = `
+    <div class="pp-title">${d.title}</div>
+    <div class="pp-block">
+      <div class="pp-label">你的问题</div>
+      <div class="pp-text">${d.problem}</div>
+    </div>
+    <div class="pp-block">
+      <div class="pp-label">我们怎么帮你</div>
+      <div class="pp-text">${d.solution}</div>
+    </div>
+    <div class="pp-block">
+      <div class="pp-label">预期效果</div>
+      <div class="pp-merics">${d.metrics.map(m => `<span class="pp-metric">${m}</span>`).join('')}</div>
+    </div>
+    <div class="pp-case">📦 <strong>已交付案例：</strong>${d.case}</div>
+    <div class="pp-block" style="margin-top: 10px;">
+      <div class="pp-label">${d.inputHint}</div>
+    </div>
+    <a href="#" class="pp-link" onclick="document.querySelector('.container').scrollIntoView({behavior:'smooth'});return false;">⬆ 回到上方修改数据</a>
+  `;
+  document.getElementById('ppContent').innerHTML = html;
+}
+
+document.querySelectorAll('.pp-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.pp-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderPainSolution(tab.dataset.pain);
+  });
+});
+
+// 初始化痛点模块
+renderPainSolution('detection');
+
+// 初始化
+calc();
+
+// 响应式
+window.addEventListener('resize', () => {
+  echarts.getInstanceByDom(document.getElementById('chartBar'))?.resize();
+  echarts.getInstanceByDom(document.getElementById('chartPie'))?.resize();
+  echarts.getInstanceByDom(document.getElementById('chartCost'))?.resize();
+});
+</script>
+</body>
+</html>
