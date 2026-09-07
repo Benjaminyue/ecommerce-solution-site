@@ -309,21 +309,21 @@
       <div class="section-tag">营收 & 订单</div>
       <div class="form-group">
         <label>日均订单量</label>
-        <input type="number" id="dailyOrders" value="5000" min="100" max="100000" step="100">
+        <input type="number" id="dailyOrders" value="10000" min="100" max="100000" step="100">
       </div>
       <div class="form-group">
         <label>客单价/元</label>
-        <input type="number" id="avgPrice" value="120" min="10" max="5000" step="10">
+        <input type="number" id="avgPrice" value="150" min="10" max="5000" step="10">
       </div>
       <div class="form-group">
         <label>月GMV/万元</label>
-        <input type="number" id="monthlyGMV" value="1800" min="10" max="50000" step="50">
+        <input type="number" id="monthlyGMV" value="4500" min="10" max="50000" step="50">
       </div>
 
       <div class="section-tag">退货 & 损耗</div>
       <div class="form-group">
         <label>日均退货量</label>
-        <input type="number" id="dailyReturns" value="150" min="0" max="5000" step="10">
+        <input type="number" id="dailyReturns" value="300" min="0" max="5000" step="10">
       </div>
       <div class="form-group">
         <label>退货率/% <span class="range-val" id="returnRateVal">3%</span></label>
@@ -435,7 +435,7 @@
 const MTTR_REDUCTION = 0.67;          // 异常归因提速 MTTR 下降 67%
 const RETURN_AUTO_RATE = 0.3;        // 退货预警自动化效率提升系数
 const EXPIRY_SAVE_RATE = 0.05;        // 临期商品监控损失减少系数
-const ANOMALY_LOSS_RATIO = 0.03;     // 异常损失占GMV比率
+const ANOMALY_LOSS_RATIO = 0.10;     // 异常损失占GMV比率（含退货损耗+临期损耗+延迟响应损失）
 
 function calc() {
   const dailyOrders = +document.getElementById('dailyOrders').value;
@@ -454,13 +454,13 @@ function calc() {
   // 营收 & 损失（统一换算到万元）
   const dailyRevenue = dailyOrders * avgPrice / 10000;            // 万元/日
   const returnLoss = dailyReturns * avgPrice * 0.8 / 10000;      // 万元/日
-  const monthlyLoss = monthlyGMV * ANOMALY_LOSS_RATIO * detectDays / 30 * returnRate; // 万元/月（估算）
-  const annualSaving = monthlyLoss * 12 * MTTR_REDUCTION;        // 万元/年
+  const monthlyLoss = monthlyGMV * ANOMALY_LOSS_RATIO * (detectDays / 30); // 万元/月（估算）
 
   // 优化方向月省（万元/月）
   const savingAttribution = monthlyLoss * MTTR_REDUCTION;                         // 异常归因提速
   const savingReturnAuto = dailyReturns * avgPrice * RETURN_AUTO_RATE * 30 / 10000; // 退货预警自动化
   const savingExpiry = monthlyGMV * expiryRate / 100 * EXPIRY_SAVE_RATE;          // 临期商品监控
+  const annualSaving = (savingAttribution + savingReturnAuto + savingExpiry) * 12;        // 万元/年
 
   // 更新 KPI
   document.getElementById('kpiDailyRevenue').textContent = dailyRevenue.toFixed(1);

@@ -309,7 +309,7 @@
       <div class="hero-kpi"><div class="num" data-target="67" data-prefix="-" data-suffix="%">0</div><div class="label">异常响应MTTR</div></div>
       <div class="hero-kpi"><div class="num" data-target="3" data-suffix="分钟">0</div><div class="label">根因定位时长</div></div>
       <div class="hero-kpi"><div class="num" data-target="100" data-suffix="%">0</div><div class="label">数据可用率</div></div>
-      <div class="hero-kpi"><div class="num" data-target="0" data-suffix="万条">0</div><div class="label">618维权爆发</div></div>
+      <div class="hero-kpi"><div class="num" data-target="14" data-suffix="天">0</div><div class="label">提前预警天数</div></div>
     </div>
     <div style="margin-top: 12px; font-size: 0.76rem; color: var(--text-muted); position: relative;">以上为已交付项目实际运行数据（客户信息已脱敏）</div>
   </div>
@@ -324,10 +324,10 @@
   <p class="section-desc">以下是我们在交付过程中反复遇到的、真实存在于企业内部的问题</p>
 
   <ul class="pain-list">
-    <li><span class="pain-icon">🔍</span><strong>异常发现靠人工巡检：</strong>618 维权 4255 万条爆发后才知道"定价套路"35.5 万条投诉——靠人工和规则监控，发现时维权已经爆发，损失已经发生。</li>
+    <li><span class="pain-icon">🔍</span><strong>异常发现靠人工巡检：</strong>靠人工巡检和固定规则监控，异常发现时损失已经发生。团队还要花 3-5 天排查根因，错过最佳响应窗口。</li>
     <li><span class="pain-icon">📊</span><strong>归因只有相关性没有因果：</strong>转化率跌了不知道是流量、价格、还是竞品——团队全员开会猜原因，只能找到相关性，找不到真正的因果。</li>
-    <li><span class="pain-icon">🥛</span><strong>临期变质监控盲区：</strong>牛奶 1 月生产 6 月还在卖，消费者收到时已是豆腐渣状加酸臭——临期商品没有自动预警，变质事件靠客诉才知道。</li>
-    <li><span class="pain-icon">📦</span><strong>退货质量没人管：</strong>31 条退货里有 24 条提到"broken"但没人分析——退货文本数据躺在数据库里没人挖，质量缺陷靠人肉翻评论。</li>
+    <li><span class="pain-icon">🥛</span><strong>临期变质监控盲区：</strong>临期商品没有自动预警机制，变质事件靠客诉倒逼才知道。短保商品在库龄到期后仍在售，消费者收到时已不可用。</li>
+    <li><span class="pain-icon">📦</span><strong>退货质量没人管：</strong>退货文本理由模糊（"不好用""坏了""不满意"），靠人工分类看不过来，质量缺陷埋在评论里没人挖。</li>
   </ul>
 </section>
 
@@ -346,7 +346,7 @@
     <div class="scenario-body">
       <div class="scenario-section">
         <div class="ss-title">问题</div>
-        <p>618 期间 4255 万条维权爆发才知道有问题。靠人工和规则监控，发现异常时损失已经发生，团队还要花 3 天排查根因。</p>
+        <p>大促期间转化率突然跌 15%，团队花 3 天排查不知道原因——流量、价格、竞品、活动哪个是主因，全员开会猜，错过最佳响应窗口。</p>
       </div>
       <div class="scenario-section">
         <div class="ss-title">我们怎么做</div>
@@ -355,7 +355,7 @@
       <div class="mini-ba">
         <div class="mini-ba-item mini-ba-before">
           <div class="mini-ba-label">改造前</div>
-          <div class="mini-ba-value" style="color: var(--accent2);">4255 万维权爆发才知道</div>
+          <div class="mini-ba-value" style="color: var(--accent2);">靠人工巡检，发现时已滞后3-5天</div>
           <div class="ba-bar before"></div>
         </div>
         <div class="mini-ba-item mini-ba-after">
@@ -383,7 +383,7 @@
     <div class="scenario-body">
       <div class="scenario-section">
         <div class="ss-title">问题</div>
-        <p>牛奶 1 月生产到 6 月还在卖，消费者收到时已是豆腐渣状加酸臭——临期商品没有自动预警，变质事件靠客诉倒逼。</p>
+        <p>短保商品在库龄到期后仍在售，消费者收到时已不可用——临期商品没有自动预警，变质事件靠客诉倒逼。</p>
       </div>
       <div class="scenario-section">
         <div class="ss-title">我们怎么做</div>
@@ -392,7 +392,7 @@
       <div class="mini-ba">
         <div class="mini-ba-item mini-ba-before">
           <div class="mini-ba-label">改造前</div>
-          <div class="mini-ba-value" style="color: var(--accent2);">1 月生产 6 月还在卖</div>
+          <div class="mini-ba-value" style="color: var(--accent2);">临期无预警，变质靠客诉</div>
           <div class="ba-bar before"></div>
         </div>
         <div class="mini-ba-item mini-ba-after">
@@ -420,7 +420,7 @@
     <div class="scenario-body">
       <div class="scenario-section">
         <div class="ss-title">问题</div>
-        <p>31 条退货里有 24 条提到"broken"但没人发现——退货文本理由模糊，靠人工分类看不过来，质量缺陷埋在评论里没人挖。</p>
+        <p>退货文本理由模糊（"不好用""坏了""不满意"），靠人工分类看不过来，质量缺陷埋在评论里没人挖。</p>
       </div>
       <div class="scenario-section">
         <div class="ss-title">我们怎么做</div>
@@ -429,7 +429,7 @@
       <div class="mini-ba">
         <div class="mini-ba-item mini-ba-before">
           <div class="mini-ba-label">改造前</div>
-          <div class="mini-ba-value" style="color: var(--accent2);">24/31 条提"broken"没人管</div>
+          <div class="mini-ba-value" style="color: var(--accent2);">人工分类，质量缺陷埋在评论里</div>
           <div class="ba-bar before"></div>
         </div>
         <div class="mini-ba-item mini-ba-after">
@@ -463,11 +463,11 @@
   <table class="ba-table">
     <thead><tr><th style="color: var(--accent2);">决策场景</th><th style="color: var(--text-muted);">改造前</th><th style="color: var(--accent3);">改造后</th></tr></thead>
     <tbody>
-      <tr><td><strong>异常发现</strong></td><td style="color: var(--text-muted);">维权 4255 万爆发才知道</td><td style="color: var(--accent3);">3 分钟自动定位 Top4 因素</td></tr>
+      <tr><td><strong>异常发现</strong></td><td style="color: var(--text-muted);">靠人工巡检，滞后3-5天</td><td style="color: var(--accent3);">3 分钟自动定位 Top4 因素</td></tr>
       <tr><td><strong>归因分析</strong></td><td style="color: var(--text-muted);">全员开会猜原因，3 天排查</td><td style="color: var(--accent3);">6 因素自动归因，准确率 94%</td></tr>
-      <tr><td><strong>临期监控</strong></td><td style="color: var(--text-muted);">牛奶 1 月生产 6 月还在卖</td><td style="color: var(--accent3);">临期前 7 天预警+触发促销</td></tr>
-      <tr><td><strong>退货分析</strong></td><td style="color: var(--text-muted);">人工分类，"broken"没人发现</td><td style="color: var(--accent3);">AI 分类+Z-score 异常标红</td></tr>
-      <tr><td><strong>数据可用率</strong></td><td style="color: var(--text-muted);">73% 数据从未影响决策</td><td style="color: var(--accent3);">100% 数据可用于决策</td></tr>
+      <tr><td><strong>临期监控</strong></td><td style="color: var(--text-muted);">临期无预警，变质靠客诉</td><td style="color: var(--accent3);">临期前 7 天预警+触发促销</td></tr>
+      <tr><td><strong>退货分析</strong></td><td style="color: var(--text-muted);">人工分类，质量缺陷埋在评论里</td><td style="color: var(--accent3);">AI 分类+Z-score 异常标红</td></tr>
+      <tr><td><strong>数据可用率</strong></td><td style="color: var(--text-muted);">大量数据沉淀数仓未用于决策</td><td style="color: var(--accent3);">100% 数据可用于决策</td></tr>
     </tbody>
   </table>
 
@@ -505,9 +505,9 @@
   <div class="case-card">
     <span class="tag">案例 1</span>
     <h3>某电商零售企业 · 异常归因项目</h3>
-    <div class="meta">每日 2.5PB 数据 · 16 个 KPI 监控 · 2026 年交付</div>
-    <div class="case-section"><div class="ct">企业背景</div><p>某电商零售企业，每日产生 2.5PB 数据，但 73% 的数据从未影响任何商业决策。数据沉淀在数仓里，没有流向业务动作。</p></div>
-    <div class="case-section"><div class="ct">挑战</div><p>618 期间转化率跌 15%，团队花 3 天排查不知道原因——流量、价格、竞品、活动哪个是主因，全员开会猜，错过最佳响应窗口。</p></div>
+    <div class="meta">16 个 KPI 监控 · 2026 年交付</div>
+    <div class="case-section"><div class="ct">企业背景</div><p>某电商零售企业，数据沉淀在数仓里，大量数据从未影响任何商业决策。管理层看不到实时异常，数据团队沦为报表工具。</p></div>
+    <div class="case-section"><div class="ct">挑战</div><p>大促期间转化率突然跌 15%，团队花 3 天排查不知道原因——流量、价格、竞品、活动哪个是主因，全员开会猜，错过最佳响应窗口。</p></div>
     <div class="case-section"><div class="ct">我们做了什么</div><p>部署 16 个 KPI 实时监控 + 统计异常检测（Z-score）+ 6 因素自动归因。对接客户现有 ERP/订单/流量数据，无需替换系统。一旦 KPI 偏离基线自动触发归因，3 分钟输出 Top4 贡献因素。</p></div>
     <div class="case-section">
       <div class="ct">结果</div>
@@ -533,7 +533,7 @@
     <h3>某电商平台 · 退货分析项目</h3>
     <div class="meta">月均退货 5000+ 条 · AI 文本分类 · 2026 年交付</div>
     <div class="case-section"><div class="ct">企业背景</div><p>某电商平台，月均退货 5000+ 条，退货文本理由模糊（"不好用""坏了""不满意"），无法定位质量问题。退货数据躺在数据库里没人挖。</p></div>
-    <div class="case-section"><div class="ct">挑战</div><p>退货原因靠人工分类，效率低覆盖不全。31 条退货里 24 条提到"broken"但没人发现——质量缺陷埋在评论里，靠客诉倒逼才知道。</p></div>
+    <div class="case-section"><div class="ct">挑战</div><p>退货原因靠人工分类，效率低覆盖不全。质量缺陷埋在退货评论里，靠客诉倒逼才知道。</p></div>
     <div class="case-section"><div class="ct">我们做了什么</div><p>部署 AI 退货文本分类 + Z-score 异常检测 + 质量根因推断。退货文本自动归类，Z-score &gt; 2 自动标红并推断质量根因，高置信度缺陷提前预警。</p></div>
     <div class="case-section">
       <div class="ct">结果</div>
@@ -547,7 +547,7 @@
           <tr><td>退货分类</td><td class="before">人工</td><td class="after">AI 自动</td></tr>
           <tr><td>异常标记</td><td class="before">无人发现</td><td class="after">Z-score&gt;2 标红</td></tr>
           <tr><td>质量预警</td><td class="before">客诉倒逼</td><td class="after">提前 14 天</td></tr>
-          <tr><td>缺陷发现</td><td class="before">24/31 漏检</td><td class="after">高置信自动</td></tr>
+          <tr><td>缺陷发现</td><td class="before">人工漏检</td><td class="after">高置信自动</td></tr>
         </tbody>
       </table>
     </div>
@@ -565,7 +565,7 @@
     <div class="author"><strong>运营总监</strong> · 某电商零售企业</div>
   </div>
   <div class="testimonial">
-    <div class="quote">"以前退货文本就躺在那没人看。上了这套以后，24 条退货提'broken'系统直接标红，比我们质量部还快。提前两周就发现了批次问题。"</div>
+    <div class="quote">"以前退货文本就躺在那没人看。上了这套以后，系统直接标红异常退货原因，比我们质量部还快。提前两周就发现了批次问题。"</div>
     <div class="author"><strong>质量总监</strong> · 某电商平台</div>
   </div>
   <div class="testimonial">
